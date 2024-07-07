@@ -2,13 +2,15 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
+    emacs-overlay.url = "github:nix-community/emacs-overlay/master";
   };
-  outputs = { self, nixpkgs, flake-utils }:
+  outputs = { self, nixpkgs, flake-utils, emacs-overlay }:
     flake-utils.lib.eachDefaultSystem
       (system:
         let
+          overlays = [ (import emacs-overlay) ];
           pkgs = import nixpkgs {
-            inherit system ;
+            inherit system overlays;
           };
         in
         with pkgs;
@@ -21,12 +23,19 @@
             '';
             buildInputs = [
               git
-              emacs
+              ((emacsPackagesFor emacs-unstable).emacsWithPackages
+                (epkgs: [
+                  epkgs.vterm
+                  epkgs.treesit-grammars.with-all-grammars
+                ]))
+
               jdk21
               ripgrep
               fd
               maven
               python3
+              cmake
+              libvterm
             ];
           };
         }
